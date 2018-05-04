@@ -7,10 +7,7 @@ public class BeaconSql
         String USERNAME="root";
         String PASSWORD="koyean9401";
         String URL="jdbc:mysql://localhost/beacon";
-//      String URL="jdbc:driver://ec2-18-216-177-151.us-east-2.compute.amazonaws.com:7777/beacon=root&password=koyean9401";
-
-
-
+	
         public BeaconSql()
         {
                 try
