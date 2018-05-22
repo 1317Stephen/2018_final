@@ -2,6 +2,7 @@
 
 <class description>
     - Server6에서
+ 
 1. Beacon: SERVER에서 정보 취득
 2. BeaconDistanceCal: rssi & tx power 로 거리 계산
 3. BeaconSql: DB에 저장
