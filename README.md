@@ -1,6 +1,6 @@
 # 2018_final
 
-<class description>
+class description
     - Server6에서
  
 1. Beacon: SERVER에서 정보 취득
