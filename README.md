@@ -9,6 +9,6 @@ class description
 4. Location: (lagtude, longitude) 혹은 (x,y)
 5. WriteHTML: db에 저장된 uuid, timestamp, 거리를 꺼내와서 html에 실시간으로 적는다.
     http://ec2-18-216-177-151.us-east-2.compute.amazonaws.com/test.html 
-6. FourCircleIntersection: 라즈베리4개 위치와 그에 따른 거리 4개  input으로 location(x,y) 계산
+6. FourCircleIntersection: 라즈베리4개 위치와 그에 따른 거리 4개를 받아서 location(x,y) 계산
      
 
