@@ -1,0 +1,46 @@
+#include <SoftwareSerial.h>
+
+#define rxPin 2
+#define txPin 3
+SoftwareSerial bleSerial(rxPin, txPin); // RX, TX. For Leonardo, only pin 8, 9, 10, 11, 14, 15, 16 is can be used for rxPin.
+
+void setup()  
+{
+  
+  Serial.begin(9600);
+  pinMode (rxPin, INPUT);
+  pinMode (txPin, OUTPUT);
+  Serial.begin(9600);
+  bleSerial.begin(9600);
+//  Serial.println("Goodnight moon!");
+  // set slave
+//  bleSerial.print("AT+ROLE0"); 
+  // or set master
+//   bleSerial.println("AT+ROLE1"); 
+ // delay(5);
+  //delay(10000);
+
+}
+
+void loop()
+{
+  while(1)
+  {
+    if (bleSerial.available())
+    {
+//      char mystr=bleSerial.read();
+  //    Serial.println(bleSerial.read());
+      Serial.write(bleSerial.read());
+      
+      
+    }
+
+    if (Serial.available())
+    {
+      bleSerial.write(Serial.read());
+
+    }
+
+  }
+      Serial.println();
+}
