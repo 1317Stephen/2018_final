@@ -1,0 +1,8 @@
+https://arduino.stackexchange.com/questions/34858/ftdi-to-hm-10cc2541-serial-command-no-response
+HM-10이 정식 기기가 아니라 중국 짝퉁이여서 없는 부품이 있음.
+
+
+해결책:
+http://nerdclub-uk.blogspot.kr/2016/02/working-with-cheap-bluetooth-btle4.html
+
+https://rydepier.wordpress.com/2015/10/22/comparing-the-hm10-and-ble-cc41a-bluetooth/
