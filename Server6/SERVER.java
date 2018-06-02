@@ -43,7 +43,7 @@ class userThread extends Thread
 		String []uuid = new String[3];
 		String []macAd = new String[4];
 		float []getherDistances = new float[100];
-		int distanceNumber=0;
+		int distanceCount=0;
 		String beginTimeStamp = "";
 		String endTimeStamp = "";
 		String locationUUID = "";
@@ -64,10 +64,15 @@ class userThread extends Thread
 		macAd[2] = "no3";
 		macAd[3] = "no4";
 	
+	
+		DistanceAverage calculateDistanceAve;
+		
+	
 		InputStream IS;
 		OutputStream OS;
 		BufferedReader in;
 		PrintWriter out;
+		
                 try
                 {
                         IS=SS.getInputStream();
@@ -114,9 +119,10 @@ class userThread extends Thread
 							{
 								getherDistances = test_sql.getherDistances(uuid[uuidIndex], macAd[i], test_sql.getLatestTimeStampWithLocation(),  test_beacon.getTimestamp());
 							}
-							
+							distanceCount = test_sql.getDistanceCount();
 							System.out.println("uuid:" + uuid[uuidIndex] + ", rasp:" + macAd[i] + ", distance#:" + test_sql.getDistanceCount() );
-							
+							calculateDistanceAve = new DistanceAverage(getherDistances, distanceCount);
+							System.out.println("AVE: " + calculateDistanceAve.calculateAverageDistance() );
 						}
 						
 						
