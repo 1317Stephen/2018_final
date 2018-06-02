@@ -130,7 +130,8 @@ public class BeaconSql
 //				lastTwoTimeStamp[1] = rs.getString("timeStamp");
 				i++;
 				if(i==2)break;
-			}			
+			}
+			
 				lastTwoSecond[0] = Integer.parseInt( lastTwoTimeStamp[0].substring(16,18) );
 				lastTwoSecond[1] = Integer.parseInt( lastTwoTimeStamp[1].substring(16,18) );
 				System.out.println("sec1:"+lastTwoSecond[0]+", sec2: "+lastTwoSecond[1]);
@@ -166,9 +167,9 @@ public class BeaconSql
                 }
 		return isBeaconOff;
 	}
-	public void insertLocation(String uuid, String timeStamp, Location location)
+	public void insertLocation(String uuid, String timeStamp, Location location, String area)
 	{
-		String sql="insert into location values(?,?,?,?,?);";
+		String sql="insert into location(uuid, x, y, timeStamp, pattern, area) values(?,?,?,?,?,?);";
 		PreparedStatement pstmt=null;
 		try
 		{
@@ -181,6 +182,7 @@ public class BeaconSql
 			System.out.println("y in location");
 			pstmt.setString(4, timeStamp);
 			pstmt.setInt(5, 0);
+			pstmt.setString(6, area);
 			pstmt.executeUpdate();
 		}
                 catch(SQLException e)

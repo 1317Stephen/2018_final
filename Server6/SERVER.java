@@ -42,8 +42,11 @@ class userThread extends Thread
 		
 		String []uuid = new String[3];
 		String []macAd = new String[4];
+		
 		float []getherDistances = new float[100];
 		int distanceCount=0;
+		float []getherDistancesAVE = new float[4];
+		
 		String beginTimeStamp = "";
 		String endTimeStamp = "";
 		String locationUUID = "";
@@ -66,7 +69,9 @@ class userThread extends Thread
 	
 	
 		DistanceAverage calculateDistanceAve;
-		
+		double width= 2.4;
+		double height= 1.6;
+		Location location;
 	
 		InputStream IS;
 		OutputStream OS;
@@ -101,9 +106,9 @@ class userThread extends Thread
 				if(test_sql.getLatestTimeStampWithLocation()!= "" )
 				{
 					System.out.println("timeStamp(with Location): " + test_sql.getLatestTimeStampWithLocation());
-					latestTimeWithLocation = Integer.parseInt( test_sql.getLatestTimeStampWithLocation().substring(17,19) );
+					latestTimeWithLocation = Integer.parseInt( test_sql.getLatestTimeStampWithLocation().substring(16,18) );
 				}
-				if(  (latestTimeWithLocation+5)%60 <   currentSec  )
+				if(  (latestTimeWithLocation+timeInterval)%60 <   currentSec  )
 				{
 					System.out.println("latestTimeWithLocation: "+ latestTimeWithLocation );
 					while(uuidIndex < 3)
@@ -122,14 +127,41 @@ class userThread extends Thread
 							distanceCount = test_sql.getDistanceCount();
 							System.out.println("uuid:" + uuid[uuidIndex] + ", rasp:" + macAd[i] + ", distance#:" + test_sql.getDistanceCount() );
 							calculateDistanceAve = new DistanceAverage(getherDistances, distanceCount);
+							
+							getherDistancesAVE[i] = calculateDistanceAve.calculateAverageDistance();
 							System.out.println("AVE: " + calculateDistanceAve.calculateAverageDistance() );
+							
+							
 						}
 						
+						calculateLocation = new FourCircleIntersection(width, height, getherDistancesAVE);
+						calculateLocation.calcalateIntersection();
+						location = new Location(calculateLocation.getIntersectionLocatoin().getLatitude(), calculateLocation.getIntersectionLocatoin().getLongitude() );
+						System.out.println("Locatoin: ("+ location.getLatitude() + ", " +  location.getLongitude() + ")");
+						
+						//Location timeStamp: currentTimeStamp(last time)
+						//-> further more: setting the weight in timeStmap by number of distances
+						if( (!Double.isNaN(location.getLatitude()))  && (!Double.isNaN(location.getLongitude())) )
+						{
+							test_sql.insertLocation( uuid[uuidIndex], test_beacon.getTimestamp(),  location, "A");
+							test_sql.updataIsCalculateLocationTrue( uuid[uuidIndex], test_beacon.getTimestamp() );
+						}
+
 						
 						uuidIndex++;
 					}
 					uuidIndex=0;
 				}
+				
+				
+				for(uuidIndex=0; uuidIndex<3; uuidIndex++)
+				{
+					if( isBeaconOFF(uuid[uuidIndex]) )
+					{
+						test_sql.updateLocationPattern( uuid[uuidIndex], test_sq.latestPatternNumber()+1 );
+					}
+				}
+				
 
 				
 
