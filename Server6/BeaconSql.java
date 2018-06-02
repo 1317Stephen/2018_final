@@ -11,6 +11,8 @@ public class BeaconSql
 	String locationTimeStamp="";
 	String []locationDistances = new String[4];
 	Statement stmt = null;
+	int distanceCount = 0;
+	
         public BeaconSql()
         {
                 try
@@ -281,8 +283,11 @@ public class BeaconSql
 		}
 		return latestTimeStamp;
 	}
-	
-	public float[] getherDistances(String uuid, String raspberryNumber, String startTimeStamp, String endTimeStamp, int distanceCount)
+	void int getDistanceCount()
+	{
+		return this.distanceCount;
+	}
+	public float[] getherDistances(String uuid, String raspberryNumber, String startTimeStamp, String endTimeStamp)
 	{
 		int distanceIndex = 0;
 		float []distances = new float[100];
@@ -290,13 +295,14 @@ public class BeaconSql
 		StringBuilder sb = new StringBuilder();
 		PreparedStatement pstmt = null;
 		ResultSet rs;
-		String sql = sb.append("select timeStamp, distance from beacon where ").append("uuid = '").append(uuid).append("' and raspberryNumber = '").append("' and").append(" timeStamp > '").append(startTimeStamp).append("' and timeStamp <= '").append(endTimeStamp).append("';").toString();
+		String sql = sb.append("select timeStamp, distance from beacon where ").append("uuid = '").append(uuid).append("' and raspberryNumber = '").append(raspberryNumber).append("' and").append(" timeStamp > '").append(startTimeStamp).append("' and timeStamp <= '").append(endTimeStamp).append("';").toString();
 		try
 		{
 			pstmt = conn.prepareStatement(sql);
 			rs = pstmt.executeQuery();	
 			while(rs.next())
 			{
+				System.out.println("distance: " + rs.getFloat("distance") );
 				distances[distanceIndex] = rs.getFloat("distance");
 				
 				distanceIndex++;
@@ -310,7 +316,8 @@ public class BeaconSql
 		{
 			e.printStackTrace();
 		}
-		distanceCount = distanceIndex;
+		Systme.out.println("distanceIndex: " + distanceIndex);
+		this.distanceCount = distanceIndex;
 		return distances;
 	}
 	
@@ -346,7 +353,7 @@ public class BeaconSql
 		}	
 		return distances; 
 	}
-
+	
 
 	public boolean is4RaspberrySignalDB()
 {

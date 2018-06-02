@@ -59,10 +59,10 @@ class userThread extends Thread
 		uuid[2]="33333333333333333333333333333333";
 		
 		
-		macAd[0] = "no.1";
-		macAd[1] = "no.2";
-		macAd[2] = "no.3";
-		macAd[3] = "no.4";
+		macAd[0] = "no1";
+		macAd[1] = "no2";
+		macAd[2] = "no3";
+		macAd[3] = "no4";
 	
 		InputStream IS;
 		OutputStream OS;
@@ -101,13 +101,21 @@ class userThread extends Thread
 				if(  (latestTimeWithLocation+5)%60 <   currentSec  )
 				{
 					System.out.println("latestTimeWithLocation: "+ latestTimeWithLocation );
-					while(uuidIndex < 4)
+					while(uuidIndex < 3)
 					{
 						for(int i=0; i<4; i++)
 						{
 							getherDistances = new float[100];
-							getherDistances = test_sql.getherDistances(uuid[uuidIndex], macAd[i], test_sql.getLatestTimeStampWithLocation(),  test_beacon.getTimestamp(), distanceNumber );
-							System.out.println("uuid:" + uuid[uuidIndex] + ", rasp:" + macAd[i] + ", distance#:" + distanceNumber);
+							if( latestTimeWithLocation == 0)
+							{
+								getherDistances = test_sql.getherDistances(uuid[uuidIndex], macAd[i], this.startTimeStamp,  test_beacon.getTimestamp());
+							}
+							else
+							{
+								getherDistances = test_sql.getherDistances(uuid[uuidIndex], macAd[i], test_sql.getLatestTimeStampWithLocation(),  test_beacon.getTimestamp());
+							}
+							
+							System.out.println("uuid:" + uuid[uuidIndex] + ", rasp:" + macAd[i] + ", distance#:" + test_sql.getDistanceCount() );
 							
 						}
 						
