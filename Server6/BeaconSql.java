@@ -1,6 +1,3 @@
-//http://sime.tistory.com/83
-//http://goppa.tistory.com/entry/MySQL-%EC%A1%B0%ED%9A%8C-%EC%93%B0%EA%B8%B0-%EC%88%98%EC%A0%95-%EC%82%AD%EC%A0%9C
-import java.io.*;
 import java.sql.*;
 import java.util.*;
 //uuid, rssi, transmissionPower, timestamp, macAD
@@ -10,7 +7,10 @@ public class BeaconSql
         String USERNAME="root";
         String PASSWORD="koyean9401";
         String URL="jdbc:mysql://localhost/beacon";
-
+	String locationUUID="";
+	String locationTimeStamp="";
+	String []locationDistances = new String[4];
+	Statement stmt = null;
         public BeaconSql()
         {
                 try
@@ -18,6 +18,7 @@ public class BeaconSql
                         System.out.println("try to Connect MYSQL");
                         Class.forName("com.mysql.jdbc.Driver");
                         conn=DriverManager.getConnection(URL, USERNAME, PASSWORD);
+			this.stmt = conn.createStatement();
                         System.out.println("->Connection:MYSQL");
                 }
                 catch(ClassNotFoundException e)
@@ -45,7 +46,7 @@ public class BeaconSql
                         pstmt.setString(4,beacon.getTimestamp());
                         pstmt.setString(5,beacon.getMacAddress());
 			pstmt.setFloat(6,beacon.getDistance());
-			pstmt.setString(7,beacon.getConfiguration());
+			pstmt.setBoolean(7,false);
                         pstmt.executeUpdate();
                 }
                 catch(SQLException e)
@@ -67,6 +68,327 @@ public class BeaconSql
                         }
                 }
         }
+	public void updateLocationPattern(String uuid, int patternNumber)
+	{
+		StringBuilder sb = new StringBuilder();
+		String sql = sb.append("update location set pattern=").append(patternNumber).append(" where uuid='").append(uuid).append("' and pattern != 0;").toString();
+		PreparedStatement pstmt = null;
+		ResultSet re;
+		
+		try
+		{
+			stmt.executeUpdate(sql);
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	public int latestPatternNumber()
+	{
+		int patternNumber=0;
+		String sql = "select pattern from location order by pattern DESC";
+		PreparedStatement pstmt = null;
+		ResultSet rs;	
+		try
+		{
+			pstmt = conn.prepareStatement(sql);
+			rs = pstmt.executeQuery();
+			if(rs.next())
+			{
+				patternNumber = rs.getInt("pattern");
+			}
+			
+		}
+		catch(SQLException e)
+                {
+                        e.printStackTrace();
+                        System.out.println("<Error>Fail to Conneting SQL ! \b");
+                }
+		return patternNumber;
+	}
+	public boolean isBeaconOFF(String uuid)
+	{
+		int i=0;
+		int sec=0;
+		boolean isBeaconOff = false;
+		String []lastTwoTimeStamp = new String[3];
+		int lastTwoSecond[] = new int[3];
+		String sql= "select timeStamp from location order by timeStamp;";
+		PreparedStatement pstmt = null;
+		ResultSet rs;
+		try
+		{
+			pstmt = conn.prepareStatement(sql);
+			rs = pstmt.executeQuery();
+				
+			while( rs.next())
+			{
+				lastTwoTimeStamp[i] = rs.getString("timeStamp");
+//				lastTwoTimeStamp[1] = rs.getString("timeStamp");
+				i++;
+				if(i==2)break;
+			}			
+				lastTwoSecond[0] = Integer.parseInt( lastTwoTimeStamp[0].substring(16,18) );
+				lastTwoSecond[1] = Integer.parseInt( lastTwoTimeStamp[1].substring(16,18) );
+				System.out.println("sec1:"+lastTwoSecond[0]+", sec2: "+lastTwoSecond[1]);
+				sec = lastTwoSecond[1] - lastTwoSecond[0];
+				System.out.println("sec:"+sec);
+				if(sec > 5 || sec < 0)
+				{
+					System.out.print("off:");
+					System.out.println(sec);
+					isBeaconOff = true;
+				}
+			
+			return isBeaconOff;
+		}
+                catch(SQLException e)
+                {
+                        e.printStackTrace();
+                        System.out.println("<Error>Fail to Conneting SQL ! \b");
+                }
+		finally
+                {
+                        try
+                        {
+                                if(pstmt !=null && !pstmt.isClosed())
+                                {
+                                        pstmt.close();
+                                }
+                        }
+                        catch(SQLException e)
+                        {
+                                e.printStackTrace();
+                        }
+                }
+		return isBeaconOff;
+	}
+	public void insertLocation(String uuid, String timeStamp, Location location)
+	{
+		String sql="insert into location values(?,?,?,?,?);";
+		PreparedStatement pstmt=null;
+		try
+		{
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, uuid);
+			System.out.println("uuid in location");
+			pstmt.setDouble(2, location.getLatitude());
+			System.out.println("x in location");
+			pstmt.setDouble(3, location.getLongitude());
+			System.out.println("y in location");
+			pstmt.setString(4, timeStamp);
+			pstmt.setInt(5, 0);
+			pstmt.executeUpdate();
+		}
+                catch(SQLException e)
+                {
+                        e.printStackTrace();
+                }
+                finally
+                {
+                        try
+                        {
+                                if(pstmt !=null && !pstmt.isClosed())
+                                {
+                                        pstmt.close();
+                                }
+                        }
+                        catch(SQLException e)
+                        {
+                                e.printStackTrace();
+                        }
+                }
+	}	
+	public String getLocationUUID()
+	{
+		return locationUUID;
+	}
+	public String getLocationTimeStamp()
+	{
+		return locationTimeStamp;
+	}
+	public String[] getLocationDistances()
+	{
+		return locationDistances;
+	}
+	public void updataIsCalculateLocationTrue(String uuid, String timeStamp)
+	{
+		StringBuilder sb = new StringBuilder();
+		String sql = sb.append("update beacon set isCalculateLocation=1 where uuid='").append(uuid).append("' and timeStamp='").append(timeStamp).append("';").toString();
+		PreparedStatement pstmt = null;
+		ResultSet re;
+		try
+		{
+			stmt.executeUpdate(sql);
+			
+		}
+		 catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public String getLatestTimeStampWithLocation()
+	{
+		PreparedStatement pstmt;
+		ResultSet rs;
+		
+		String latestTimeStamp = "";
+		String sql = "select timeStamp from beacon where isCalculateLocation=true order by timeStamp DESC;";
+		try
+		{
+			pstmt = conn.prepareStatement(sql);
+			rs = pstmt.executeQuery();
+			while(rs.next())
+			{
+				latestTimeStamp = rs.getString("timeStamp");
+				if(latestTimeStamp != "")
+				{
+					break;
+				}
+			}
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+		return latestTimeStamp;
+	}
+	public String getLatestTimeStamp()
+	{
+		PreparedStatement pstmt;
+		ResultSet rs;
+		
+		String latestTimeStamp = new String();
+		String sql = "select timeStamp from beacon order by timeStamp DESC;";
+		try
+		{
+			pstmt = conn.prepareStatement(sql);
+			rs = pstmt.executeQuery();
+			while(rs.next())
+			{
+				latestTimeStamp = rs.getString("timeStamp");
+				if(latestTimeStamp != null)
+				{
+					break;
+				}
+			}
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+		return latestTimeStamp;
+	}
+	
+	public float[] getherDistances(String uuid, String raspberryNumber, String startTimeStamp, String endTimeStamp, int distanceCount)
+	{
+		int distanceIndex = 0;
+		float []distances = new float[100];
+		
+		StringBuilder sb = new StringBuilder();
+		PreparedStatement pstmt = null;
+		ResultSet rs;
+		String sql = sb.append("select timeStamp, distance from beacon where ").append("uuid = '").append(uuid).append("' and raspberryNumber = '").append("' and").append(" timeStamp > '").append(startTimeStamp).append("' and timeStamp <= '").append(endTimeStamp).append("';").toString();
+		try
+		{
+			pstmt = conn.prepareStatement(sql);
+			rs = pstmt.executeQuery();	
+			while(rs.next())
+			{
+				distances[distanceIndex] = rs.getFloat("distance");
+				
+				distanceIndex++;
+				if(distanceIndex >100)
+				{
+					break;
+				}
+			}
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+		distanceCount = distanceIndex;
+		return distances;
+	}
+	
+	public float[] getherFourDistances(String uuid, String timeStamp)
+	{
+		int countFour=0;
+		int i=0;
+		float []distances = new float[4];
+		StringBuilder sb = new StringBuilder();
+//		String sql = sb.append("select distance from beacon where uuid='").append(uuid).append("' and timeStamp='").append(timeStamp).append("';").toString();
+
+		String sql = sb.append("select distance from beacon where uuid='").append(uuid).append("' order by timeStamp DESC;").toString();
+		PreparedStatement pstmt = null;
+		ResultSet rs;
+		try
+		{
+			pstmt = conn.prepareStatement(sql);
+			rs = pstmt.executeQuery();
+			while(rs.next())
+			{
+				distances[i] = rs.getFloat("distance");
+				i++;
+				if(i>3)
+				{
+					break;
+				}
+			}
+			
+		}
+		 catch(SQLException e)
+		{
+			e.printStackTrace();
+		}	
+		return distances; 
+	}
+
+
+	public boolean is4RaspberrySignalDB()
+{
+	int i=0;
+	boolean isFourSignal = false;
+	String sql = "select  uuid,timeStamp, distance, count(*) from beacon where  isCalculateLocation=false group by uuid, timeStamp having count(*)=4 order by timeStamp;";
+	PreparedStatement pstmt = null;
+	ResultSet rs;
+	try
+	{
+		pstmt = conn.prepareStatement(sql);
+		rs = pstmt.executeQuery();
+		if(rs.next())
+		{
+			this.locationUUID = rs.getString("uuid");
+			this.locationTimeStamp =rs.getString("timeStamp");
+			System.out.println("time:"+locationTimeStamp);	
+			isFourSignal = true;
+			i++;
+		}
+	}
+	 catch(SQLException e)
+	{
+		e.printStackTrace();
+	}
+	finally
+	{
+		try
+		{
+			if(pstmt !=null && !pstmt.isClosed())
+			{
+				pstmt.close();
+			}
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	return isFourSignal;
+}
+
 	public void sqlToHTML()
 	{
 		WriteHTML write_html=new WriteHTML();
@@ -92,6 +414,7 @@ public class BeaconSql
 				write_html.writeBody(re.getInt("rssi")+"");
 				write_html.writeBody(re.getString("timeStamp")+"");
 				write_html.writeBody(re.getFloat("distance")+"");
+				write_html.writeBody(re.getBoolean("isCalculateLocation")+"");
 				write_html.writeBody("<br />");
 			}
 			write_html.writeTail();
@@ -132,55 +455,9 @@ public class BeaconSql
 		{
 		}
 	}
-/*	public Beacon selectOne(long timeStamp )
-	{
-		String sql="select * from beacon where timeStamp = ?;";
-		PreparedStatement pstmt=null;
-		ResultSet rs;
-		Beacon re = new Beacon();
-		
-		try
-		{
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setFloat(4,timeStamp);
-			rs=pstmt.executeQuery();
-			
-			if( rs.next() )
-			{
-				re.setUuid(rs.getString("uuid"));
-				re.setRssi(rs.getInt("rssi"));
-				re.setTransmissionPower(rs.getInt("transmissionPower"));
-				re.setTimestamp((long) rs.getFloat("timeStamp"));
-				re.setMacAddress(rs.getString("macAddress"));
-			}
-		}
-		catch(SQLException e)
-		{
-			e.printStackTrace();
-		}
-		finally
-		{
-			try
-			{
-				if(pstmt !=null && !pstmt.isClosed())
-				{
-					pstmt.close();
-				}
-			}
-			catch(SQLException e)
-			{
-				e.printStackTrace();
-			}
-		}
-		return re;
-	}
-*///	public List<Beacon> selectSameMacAd(String macAddress)
-//	{
-//		String sql=
-//	}
-	
 
 }
+
 
 
 
