@@ -79,8 +79,8 @@ public class FourCircleIntersection
 		
 		x_1 = ( Math.pow(distances[2], 2) - Math.pow(distances[3],2) + Math.pow(width, 2) ) / (2 * width);
 		x_2 = ( Math.pow(distances[0], 2) - Math.pow(distances[1],2) + Math.pow(width, 2) ) / (2 * width);
-		y_2 = ( Math.pow(distances[1], 2) - Math.pow(distances[3],2) + Math.pow(height, 2) ) / (2 * width);
-		y_2 = ( Math.pow(distances[0], 2) - Math.pow(distances[2],2) + Math.pow(height, 2) ) / (2 * width);
+		y_1 = ( Math.pow(distances[1], 2) - Math.pow(distances[3],2) + Math.pow(height, 2) ) / (2 * height);
+		y_2 = ( Math.pow(distances[0], 2) - Math.pow(distances[2],2) + Math.pow(height, 2) ) / (2 * height);
 		intersectionLocation.setLatitude( (x_1+x_2)/2);
 		intersectionLocation.setLongitude( (y_1+y_2)/2 );
 		

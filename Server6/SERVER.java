@@ -31,7 +31,6 @@ class userThread extends Thread
         public void run()
         {
 		int patternNumber=1;
-		FourCircleIntersection calculateLocation;
                 String message;
 		float []locationDistances  = new float[4];
                 String output="Welcome";
@@ -42,11 +41,11 @@ class userThread extends Thread
 		
 		String []uuid = new String[3];
 		String []macAd = new String[4];
-		
+
 		float []getherDistances = new float[100];
 		int distanceCount=0;
 		float []getherDistancesAVE = new float[4];
-		
+
 		String beginTimeStamp = "";
 		String endTimeStamp = "";
 		String locationUUID = "";
@@ -66,18 +65,19 @@ class userThread extends Thread
 		macAd[1] = "no2";
 		macAd[2] = "no3";
 		macAd[3] = "no4";
-	
-	
-		DistanceAverage calculateDistanceAve;
+
 		double width= 2.4;
 		double height= 1.6;
 		Location location;
+		DistanceAverage calculateDistanceAve;	
+		FourCircleIntersection calculateLocation;
+
+		CoordinateToArea coordinateAreaAlphabet;
 	
 		InputStream IS;
 		OutputStream OS;
 		BufferedReader in;
 		PrintWriter out;
-		
                 try
                 {
                         IS=SS.getInputStream();
@@ -108,7 +108,7 @@ class userThread extends Thread
 					System.out.println("timeStamp(with Location): " + test_sql.getLatestTimeStampWithLocation());
 					latestTimeWithLocation = Integer.parseInt( test_sql.getLatestTimeStampWithLocation().substring(16,18) );
 				}
-				if(  (latestTimeWithLocation+timeInterval)%60 <   currentSec  )
+				if(  (latestTimeWithLocation+ timeInterval )%60 <   currentSec  )
 				{
 					System.out.println("latestTimeWithLocation: "+ latestTimeWithLocation );
 					while(uuidIndex < 3)
@@ -116,7 +116,7 @@ class userThread extends Thread
 						for(int i=0; i<4; i++)
 						{
 							getherDistances = new float[100];
-							if( latestTimeWithLocation == 0)
+																	if(latestTimeWithLocation == 0  )
 							{
 								getherDistances = test_sql.getherDistances(uuid[uuidIndex], macAd[i], this.startTimeStamp,  test_beacon.getTimestamp());
 							}
@@ -124,48 +124,51 @@ class userThread extends Thread
 							{
 								getherDistances = test_sql.getherDistances(uuid[uuidIndex], macAd[i], test_sql.getLatestTimeStampWithLocation(),  test_beacon.getTimestamp());
 							}
+										
 							distanceCount = test_sql.getDistanceCount();
 							System.out.println("uuid:" + uuid[uuidIndex] + ", rasp:" + macAd[i] + ", distance#:" + test_sql.getDistanceCount() );
-							calculateDistanceAve = new DistanceAverage(getherDistances, distanceCount);
-							
+
+																	calculateDistanceAve = new DistanceAverage(getherDistances, distanceCount);
+
 							getherDistancesAVE[i] = calculateDistanceAve.calculateAverageDistance();
 							System.out.println("AVE: " + calculateDistanceAve.calculateAverageDistance() );
-							
-							
+
 						}
 						
-						calculateLocation = new FourCircleIntersection(width, height, getherDistancesAVE);
+																calculateLocation = new FourCircleIntersection(width, height, getherDistancesAVE);
 						calculateLocation.calcalateIntersection();
 						location = new Location(calculateLocation.getIntersectionLocatoin().getLatitude(), calculateLocation.getIntersectionLocatoin().getLongitude() );
-						System.out.println("Locatoin: ("+ location.getLatitude() + ", " +  location.getLongitude() + ")");
-						
+						System.out.println("Locatoin: ("+ location.getLatitude() + ", " + location.getLongitude() + ")");
+
+
 						//Location timeStamp: currentTimeStamp(last time)
 						//-> further more: setting the weight in timeStmap by number of distances
 						if( (!Double.isNaN(location.getLatitude()))  && (!Double.isNaN(location.getLongitude())) )
 						{
-							test_sql.insertLocation( uuid[uuidIndex], test_beacon.getTimestamp(),  location, "A");
+							coordinateAreaAlphabet = new CoordinateToArea(width, height, 3, 3);
+							coordinateAreaAlphabet.settingArea();
+							
+							
+							test_sql.insertLocation( uuid[uuidIndex], test_beacon.getTimestamp(),  location, coordinateAreaAlphabet.coordinateToAreaNumber(location)+"" );
+
+
 							test_sql.updataIsCalculateLocationTrue( uuid[uuidIndex], test_beacon.getTimestamp() );
 						}
 
-						
 						uuidIndex++;
 					}
 					uuidIndex=0;
 				}
-				
-				
-				for(uuidIndex=0; uuidIndex<3; uuidIndex++)
+
+				for( uuidIndex = 0; uuidIndex<3; uuidIndex++)
 				{
-					if( isBeaconOFF(uuid[uuidIndex]) )
+					if( test_sql.isBeaconOFF( uuid[uuidIndex]	, test_beacon.getTimestamp())  )
 					{
-						test_sql.updateLocationPattern( uuid[uuidIndex], test_sq.latestPatternNumber()+1 );
+						System.out.println("patten update(before): " + test_sql.latestPatternNumber() );
+						test_sql.updateLocationPattern(  uuid[uuidIndex], test_sql.latestPatternNumber()+1 );
 					}
 				}
-				
 
-				
-
-				
 				test_sql.sqlToHTML();				
                         }
 			System.out.println("one");

@@ -12,7 +12,6 @@ public class BeaconSql
 	String []locationDistances = new String[4];
 	Statement stmt = null;
 	int distanceCount = 0;
-	
         public BeaconSql()
         {
                 try
@@ -73,7 +72,7 @@ public class BeaconSql
 	public void updateLocationPattern(String uuid, int patternNumber)
 	{
 		StringBuilder sb = new StringBuilder();
-		String sql = sb.append("update location set pattern=").append(patternNumber).append(" where uuid='").append(uuid).append("' and pattern != 0;").toString();
+		String sql = sb.append("update location set pattern=").append(patternNumber).append(" where uuid='").append(uuid).append("' and pattern = 0;").toString();
 		PreparedStatement pstmt = null;
 		ResultSet re;
 		
@@ -109,43 +108,83 @@ public class BeaconSql
                 }
 		return patternNumber;
 	}
-	public boolean isBeaconOFF(String uuid)
+	public boolean isBeaconOFF(String uuid, String currentTimeStamp)
 	{
 		int i=0;
 		int sec=0;
+		int timeInterval = 0;
+		int offTimeInterval = 5;
 		boolean isBeaconOff = false;
+		String lastTimeStamp = "";
 		String []lastTwoTimeStamp = new String[3];
 		int lastTwoSecond[] = new int[3];
-		String sql= "select timeStamp from location order by timeStamp;";
+		StringBuilder sb = new StringBuilder();
+		
+		String sql = sb.append("select timeStamp from beacon where uuid ='").append(uuid).append("' order by timeStamp DESC;").toString();
+//		String sql= "select timeStamp from beacon order by timeStamp DESC;";
+		
 		PreparedStatement pstmt = null;
 		ResultSet rs;
 		try
 		{
 			pstmt = conn.prepareStatement(sql);
 			rs = pstmt.executeQuery();
+			
 				
 			while( rs.next())
 			{
-				lastTwoTimeStamp[i] = rs.getString("timeStamp");
+				lastTimeStamp = rs.getString("timeStamp");
+//				lastTwoTimeStamp[i] = rs.getString("timeStamp");
 //				lastTwoTimeStamp[1] = rs.getString("timeStamp");
-				i++;
-				if(i==2)break;
-			}
+//				i++;
+//				if(i==1)break;
+				if( lastTimeStamp != "" )
+				{
+					break;
+				}					
 			
+			}	
+/*				System.out.println("sec1: " +lastTwoTimeStamp[0]);		
 				lastTwoSecond[0] = Integer.parseInt( lastTwoTimeStamp[0].substring(16,18) );
+				System.out.println("sec2: " +lastTwoTimeStamp[1] );
 				lastTwoSecond[1] = Integer.parseInt( lastTwoTimeStamp[1].substring(16,18) );
 				System.out.println("sec1:"+lastTwoSecond[0]+", sec2: "+lastTwoSecond[1]);
 				sec = lastTwoSecond[1] - lastTwoSecond[0];
 				System.out.println("sec:"+sec);
+
 				if(sec > 5 || sec < 0)
 				{
 					System.out.print("off:");
 					System.out.println(sec);
 					isBeaconOff = true;
 				}
-			
+*/	
+
+
+			if( lastTimeStamp != "")
+			{	
+				timeInterval = Integer.parseInt(currentTimeStamp.substring(16,18)) - Integer.parseInt(lastTimeStamp.substring(16,18));
+				System.out.println("time1:" + currentTimeStamp.substring(16,18));
+				System.out.println("time2: " + lastTimeStamp.substring(16,18) );	
+	
+				if( timeInterval  > offTimeInterval )
+				{
+					//case : 56 - 50
+
+					System.out.println("pattern up case1");
+					isBeaconOff = true;
+				}
+				else if( (timeInterval<0) &&  ( (60 + timeInterval)>offTimeInterval)  )
+				{
+					//case: 0 - 55
+
+					System.out.println("pattern up case2");
+					isBeaconOff = true;
+				}
+			}
 			return isBeaconOff;
-		}
+		}		
+
                 catch(SQLException e)
                 {
                         e.printStackTrace();
@@ -285,11 +324,8 @@ public class BeaconSql
 		}
 		return latestTimeStamp;
 	}
-	void int getDistanceCount()
-	{
-		return this.distanceCount;
-	}
-	public float[] getherDistances(String uuid, String raspberryNumber, String startTimeStamp, String endTimeStamp)
+	
+	public float[] getherDistances(String uuid, String raspberryNumber, String startTimeStamp, String endTimeStamp )
 	{
 		int distanceIndex = 0;
 		float []distances = new float[100];
@@ -301,7 +337,8 @@ public class BeaconSql
 		try
 		{
 			pstmt = conn.prepareStatement(sql);
-			rs = pstmt.executeQuery();	
+			rs = pstmt.executeQuery();
+			System.out.println("sql: " + sql);	
 			while(rs.next())
 			{
 				System.out.println("distance: " + rs.getFloat("distance") );
@@ -318,11 +355,14 @@ public class BeaconSql
 		{
 			e.printStackTrace();
 		}
-		Systme.out.println("distanceIndex: " + distanceIndex);
+		System.out.println("distanceIndex: " + distanceIndex);
 		this.distanceCount = distanceIndex;
 		return distances;
 	}
-	
+	public int getDistanceCount()
+	{
+		return this.distanceCount;
+	}
 	public float[] getherFourDistances(String uuid, String timeStamp)
 	{
 		int countFour=0;
@@ -355,7 +395,7 @@ public class BeaconSql
 		}	
 		return distances; 
 	}
-	
+
 
 	public boolean is4RaspberrySignalDB()
 {

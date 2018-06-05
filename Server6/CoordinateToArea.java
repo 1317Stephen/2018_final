@@ -9,14 +9,17 @@ public class CoordinateToArea
 	double width;
 	double height;
 	
-	public static void main(String[] args)
+/*	public static void main(String[] args)
 	{
 		CoordinateToArea test = new CoordinateToArea(9, 6, 3, 3);
 		test.settingArea();
 		System.out.println("9m*6m map(3*3): (5,5) == " + test.coordinateToAreaNumber(new Location(5,5) ) );
 		System.out.println("9m*6m map(3*3): (3,2) == " + test.coordinateToAreaNumber(new Location(3,2) ) );
 		System.out.println("9m*6m map(3*3): (8.7, 5.9) == " + test.coordinateToAreaNumber(new Location(8.7, 5.9) ) );
+
 	}
+
+*/
 	public CoordinateToArea(double width, double height, int widthDivision, int heightDivision)
 	{
 		this.width = width;
