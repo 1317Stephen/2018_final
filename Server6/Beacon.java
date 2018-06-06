@@ -44,7 +44,7 @@ public class Beacon
 		this.transmissionPower = Integer.parseInt(data[4]);
 
 //                this.rssi=Integer.parseInt(data[4]);
-//                this.transmissionPower=Integer.parseInt(data[5]);
+//               this.transmissionPower=Integer.parseInt(data[5]);
 
                 this.macAddress=data[6];
 //		this.configuration = data[8];

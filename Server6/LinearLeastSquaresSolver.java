@@ -1,4 +1,4 @@
-package com.lemmingapex.trilateration;
+//package com.lemmingapex.trilateration;
 
 import org.apache.commons.math3.linear.*;
 

@@ -12,6 +12,7 @@ import java.util.Scanner;
 
 class userThread extends Thread
 {
+	boolean isCalculate = false;
         Socket SS;
         int ID;
 	String startTimeStamp;
@@ -27,16 +28,29 @@ class userThread extends Thread
                 this.ID = ID;
 		this.startTimeStamp = startTimeStamp;
         }
+	userThread(Socket SS, int ID, String startTimeStamp, boolean isCalculate)
+	{
+		this.SS = SS;
+                this.ID = ID;
+                this.startTimeStamp = startTimeStamp;
+		this.isCalculate = isCalculate;
+	}
+	public boolean getIsCalculate()
+	{
+		return this.isCalculate;
+	}
 	@Override
         public void run()
         {
+		int i=0;
+		int countBeacon = 0;
 		int patternNumber=1;
                 String message;
 		float []locationDistances  = new float[4];
                 String output="Welcome";
 		
 		Beacon test_beacon;
-		BeaconSql test_sql;
+		BeaconSql beaconSql;
 		Beacon test_beacon_inDB;
 		
 		String []uuid = new String[3];
@@ -60,14 +74,14 @@ class userThread extends Thread
 		uuid[1]="22222222222222222222222222222222";
 		uuid[2]="33333333333333333333333333333333";
 		
-		
+		int raspberryIndex =0;
 		macAd[0] = "no.1";
 		macAd[1] = "no.2";
 		macAd[2] = "no.3";
 		macAd[3] = "no.4";
 
-		double width= 4;
-		double height= 3;
+		double width= 8;
+		double height= 10;
 		Location location;
 		DistanceAverage calculateDistanceAve;	
 		FourCircleIntersection calculateLocation;
@@ -78,12 +92,20 @@ class userThread extends Thread
 		OutputStream OS;
 		BufferedReader in;
 		PrintWriter out;
+		
+		RssiFilter rssiFilter;
+		float []getheredRssi = new float[200];
+		Beacon []getheredBeacon = new Beacon[200];
+		
                 try
                 {
                         IS=SS.getInputStream();
                         OS=SS.getOutputStream();
                         in = new BufferedReader(new InputStreamReader(IS));
                         out = new PrintWriter(OS,true);
+
+			beaconSql = new BeaconSql();
+
 
                         while ((message=in.readLine())!=null)
                         {
@@ -92,13 +114,88 @@ class userThread extends Thread
 				
                                 test_beacon=new Beacon(message);
                                 test_beacon.setDistance(BeaconDistanceCal.calculateDistanceIndoor(test_beacon.getRssi(), test_beacon.getTransmissionPower()) );
-				System.out.println(ID+":uuid in Beacon:"+test_beacon.getUuid());
-				System.out.println(ID+":distance in Beacon:"+test_beacon.getDistance());
+		
+				getheredBeacon[countBeacon] = test_beacon;
+
+//				System.out.println(ID+":rssi in Beacon:"+test_beacon.getRssi());
+//				System.out.println(ID+":distance in Beacon:"+test_beacon.getDistance());
 				
-				test_sql=new BeaconSql();
-                                test_sql.insertBeacon(test_beacon);
-				System.out.println("insert DB");
 				
+				countBeacon++;
+				
+				if(countBeacon> 30)
+				{
+					this.isCalculate = true;			
+					rssiFilter = new RssiFilter(getheredBeacon);
+						
+					rssiFilter.getherRssi();
+					
+					System.out.println("mean: "+ rssiFilter.calculateMeanRssi());
+					System.out.println("var: "+ rssiFilter.calculateVaianceRssi());			
+					for(i=0; i<countBeacon; i++)
+					{
+
+																System.out.println(ID+":rssi in Beacon:"+getheredBeacon[i].getRssi());
+						System.out.println(ID+":distance in Beacon:"+getheredBeacon[i].getDistance());
+
+
+						getheredRssi[i] = rssiFilter.calculateKalmanRssi(getheredBeacon[i].getRssi(), rssiFilter.calculateMeanRssi(), rssiFilter.calculateVaianceRssi() );
+						getheredBeacon[i].setRssi((int)getheredRssi[i]);
+						getheredBeacon[i].setDistance(BeaconDistanceCal.calculateDistanceIndoor(getheredBeacon[i].getRssi(), getheredBeacon[i].getTransmissionPower()));
+					
+						System.out.println(ID+":rssi in Beacon(F):"+getheredBeacon[i].getRssi());
+						System.out.println(ID+":distance in Beacon(F):"+getheredBeacon[i].getDistance());
+				
+				
+						beaconSql = new BeaconSql();
+//						beaconSql.insertBeacon(getheredBeacon[i]);	
+					}
+				
+					beginTimeStamp = getheredBeacon[0].getTimestamp();
+					endTimeStamp = getheredBeacon[countBeacon-1].getTimestamp();
+						
+					countBeacon=0;
+//					for(uuidIndex=0; uuidIndex<3; uuidIndex++)
+//					{
+						for(raspberryIndex=0; raspberryIndex<4; raspberryIndex++)
+						{
+							getherDistances = new float[150];
+							getherDistances = beaconSql.getherDistances(uuid[uuidIndex], macAd[raspberryIndex], beginTimeStamp,  endTimeStamp );
+		
+							distanceCount = beaconSql.getDistanceCount();
+							calculateDistanceAve = new DistanceAverage(getherDistances, distanceCount);
+		
+							getherDistancesAVE[raspberryIndex] = calculateDistanceAve.calculateAverageDistance();
+							System.out.println("distance AVE("+raspberryIndex+"): " + getherDistancesAVE[raspberryIndex]);
+		
+						}
+						calculateLocation = new FourCircleIntersection(width, height, getherDistancesAVE);
+						calculateLocation.calcalateIntersection();
+						location = new Location(calculateLocation.getIntersectionLocatoin().getLatitude(), calculateLocation.getIntersectionLocatoin().getLongitude() );
+
+						System.out.println("locatoin:(" + location.getLatitude() + ", " + location.getLongitude() + ")");
+
+						if( (!Double.isNaN(location.getLatitude()))  && (!Double.isNaN(location.getLongitude())) )
+						{
+							System.out.println("location != NaN" );
+							coordinateAreaAlphabet = new CoordinateToArea(width, height, 3, 3);
+							coordinateAreaAlphabet.settingArea();
+		
+							beaconSql.insertLocation( uuid[uuidIndex], endTimeStamp,  location, coordinateAreaAlphabet.coordinateToAreaNumber(location)+"" );
+							beaconSql.updataIsCalculateLocationTrue( uuid[uuidIndex], endTimeStamp);
+			
+						}	
+	
+						this.isCalculate = false;
+//					}
+					
+					
+					
+	
+				}
+
+				
+			/*			
 				System.out.println("start TimeStamp:"+this.startTimeStamp+", interval: "+timeInterval);
 				currentSec = Integer.parseInt( test_beacon.getTimestamp().substring(16,18) );
 				System.out.println("current: "+ test_beacon.getTimestamp() + ", current sec: " + test_beacon.getTimestamp().substring(16,18) +  ", to int: " + currentSec);
@@ -171,8 +268,16 @@ class userThread extends Thread
 				}
 				uuidIndex=0;
 
-				test_sql.sqlToHTML();				
+				test_sql.sqlToHTML();		
+
+			*/
                         }
+			
+
+			
+			
+			
+			
 			System.out.println("one");
                         System.out.println(ID + "> " + output);
                 }
@@ -188,7 +293,8 @@ class connectThread extends Thread
         ServerSocket MSS;
         int count = 1;
 	String startTimeStamp;
-	
+	boolean isCalculate = false;
+
         connectThread(ServerSocket MSS)
         {
                 this.MSS = MSS;
@@ -196,6 +302,7 @@ class connectThread extends Thread
         @Override
         public void run()
         {
+		boolean isCalculate = false;
 		Socket serverSocket;
 		userThread ust;
 		BeaconSql beaconSql;
@@ -205,7 +312,6 @@ class connectThread extends Thread
                         {
                                 serverSocket = MSS.accept();
                                 System.out.println("--" + count + " user login");
-				
 				if(count==1)
 				{
 					beaconSql = new BeaconSql();
@@ -215,9 +321,13 @@ class connectThread extends Thread
 				
 //				ust = new userThread(serverSocket, count);
 				
-				ust = new userThread(serverSocket, count, startTimeStamp);
-                                ust.start();
-				
+//				ust = new userThread(serverSocket, count, startTimeStamp);
+				ust = new userThread(serverSocket, count, startTimeStamp,isCalculate); 
+
+				if(ust.getIsCalculate() == false)
+				{
+					ust.start();
+				}
 
                                 count++;
                         }
@@ -227,6 +337,10 @@ class connectThread extends Thread
                 {
                         System.out.println("--SERVER CLOSE");
                 }
+//		catch (InterruptedException ex)
+//		{
+//			System.out.println("->fail sleep");
+//		}
         }
 	public String getStartTimeStamp()
 	{
@@ -265,6 +379,7 @@ public class SERVER
                 }
         }
 }
+
 
 
 
