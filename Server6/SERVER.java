@@ -50,7 +50,7 @@ class userThread extends Thread
 		String endTimeStamp = "";
 		String locationUUID = "";
 		String locationTimeStamp = "";
-		int timeInterval = 5;
+		int timeInterval = 10;
 		int currentSec = 0;
 		int latestTimeWithLocation = 0;
 
@@ -61,13 +61,13 @@ class userThread extends Thread
 		uuid[2]="33333333333333333333333333333333";
 		
 		
-		macAd[0] = "no1";
-		macAd[1] = "no2";
-		macAd[2] = "no3";
-		macAd[3] = "no4";
+		macAd[0] = "no.1";
+		macAd[1] = "no.2";
+		macAd[2] = "no.3";
+		macAd[3] = "no.4";
 
-		double width= 2.4;
-		double height= 1.6;
+		double width= 4;
+		double height= 3;
 		Location location;
 		DistanceAverage calculateDistanceAve;	
 		FourCircleIntersection calculateLocation;
@@ -103,19 +103,20 @@ class userThread extends Thread
 				currentSec = Integer.parseInt( test_beacon.getTimestamp().substring(16,18) );
 				System.out.println("current: "+ test_beacon.getTimestamp() + ", current sec: " + test_beacon.getTimestamp().substring(16,18) +  ", to int: " + currentSec);
 
-				if(test_sql.getLatestTimeStampWithLocation()!= "" )
+				if(!test_sql.getLatestTimeStampWithLocation().equals("") )
 				{
 					System.out.println("timeStamp(with Location): " + test_sql.getLatestTimeStampWithLocation());
 					latestTimeWithLocation = Integer.parseInt( test_sql.getLatestTimeStampWithLocation().substring(16,18) );
 				}
-				if(  (latestTimeWithLocation+ timeInterval )%60 <   currentSec  )
+
+				if(  ((latestTimeWithLocation+ timeInterval )%60 <   currentSec) || (currentSec - latestTimeWithLocation < 0)  )
 				{
 					System.out.println("latestTimeWithLocation: "+ latestTimeWithLocation );
 					while(uuidIndex < 3)
 					{
 						for(int i=0; i<4; i++)
 						{
-							getherDistances = new float[100];
+							getherDistances = new float[500];
 																	if(latestTimeWithLocation == 0  )
 							{
 								getherDistances = test_sql.getherDistances(uuid[uuidIndex], macAd[i], this.startTimeStamp,  test_beacon.getTimestamp());
@@ -168,6 +169,7 @@ class userThread extends Thread
 						test_sql.updateLocationPattern(  uuid[uuidIndex], test_sql.latestPatternNumber()+1 );
 					}
 				}
+				uuidIndex=0;
 
 				test_sql.sqlToHTML();				
                         }

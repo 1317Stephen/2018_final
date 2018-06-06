@@ -163,9 +163,9 @@ public class BeaconSql
 
 			if( lastTimeStamp != "")
 			{	
-				timeInterval = Integer.parseInt(currentTimeStamp.substring(16,18)) - Integer.parseInt(lastTimeStamp.substring(16,18));
-				System.out.println("time1:" + currentTimeStamp.substring(16,18));
-				System.out.println("time2: " + lastTimeStamp.substring(16,18) );	
+				timeInterval = Integer.parseInt(currentTimeStamp.substring(13,15)) - Integer.parseInt(lastTimeStamp.substring(13,15));
+				System.out.println("time1:" + currentTimeStamp.substring(13,15));
+				System.out.println("time2: " + lastTimeStamp.substring(13,15) );	
 	
 				if( timeInterval  > offTimeInterval )
 				{
@@ -328,7 +328,7 @@ public class BeaconSql
 	public float[] getherDistances(String uuid, String raspberryNumber, String startTimeStamp, String endTimeStamp )
 	{
 		int distanceIndex = 0;
-		float []distances = new float[100];
+		float []distances = new float[500];
 		
 		StringBuilder sb = new StringBuilder();
 		PreparedStatement pstmt = null;
@@ -345,7 +345,7 @@ public class BeaconSql
 				distances[distanceIndex] = rs.getFloat("distance");
 				
 				distanceIndex++;
-				if(distanceIndex >100)
+				if(distanceIndex > 499)
 				{
 					break;
 				}
