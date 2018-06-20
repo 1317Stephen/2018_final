@@ -130,7 +130,7 @@ class userThread extends Thread
 			{
 
 				out.println(message);
-				System.out.println("recv: "+message);
+			
 				
 				beacon = new Beacon(message);
 				getheredBeacon[countBeacon] = beacon;
@@ -156,10 +156,7 @@ class userThread extends Thread
 					rssiFilter = new RssiFilter(getheredBeacon);
 						
 					rssiFilter.getherRssi();
-					
-					System.out.println("mean: "+ rssiFilter.calculateMeanRssi());
-					System.out.println("var: "+ rssiFilter.calculateVaianceRssi());
-					
+								
 					for(i=0; i<countBeacon; i++)
 					{
 						getheredRssi[i] = rssiFilter.calculateKalmanRssi(getheredBeacon[i].getRssi(), rssiFilter.calculateMeanRssi(), rssiFilter.calculateVaianceRssi() );
@@ -224,7 +221,7 @@ class userThread extends Thread
 			
 
 		
-			System.out.println("one");
+			
                         System.out.println(ID + "> " + output);
                 }
                 catch (IOException e)
